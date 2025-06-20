@@ -64,7 +64,7 @@ io.on('connection', (socket) => {
                 const room = rooms[0];
                 io.to(room).emit('chat_message', `[${room}] ${msg}`);
             } else {
-                socket.emit('chat_init', 'Você precisa entrar em uma sala. Use /ti, /rh ou /eng.');
+                socket.emit('chat_init', '[TODOS] ' + msg);
             }
         }
 
