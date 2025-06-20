@@ -27,6 +27,7 @@ io.on('connection', (socket) => {
 
     socket.on('chat_init', (msg) => {
         console.log('message: ' + msg);
+
         if (msg.toLowerCase() === '/data') {
             socket.emit('chat_init', data);
 
@@ -64,7 +65,9 @@ io.on('connection', (socket) => {
                 const room = rooms[0];
                 io.to(room).emit('chat_message', `[${room}] ${msg}`);
             } else {
-                socket.emit('chat_init', '[TODOS] ' + msg);
+                socket.emit('chat_message', '[TODOS]' + msg);
+                socket.broadcast.emit('chat_message', '[TODOS] ' + msg);
+
             }
         }
 

@@ -77,12 +77,16 @@
     const input = document.getElementById('input');
     const messages = document.getElementById('messages');
 
+    socket.broadcast = true;
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (input.value) {
             socket.emit('chat_init', input.value);
             input.value = '';
+            socket.emit('chat_message', input.value);
+            input.value = '';
+            socket.broadcast = true;
         }
     });
     socket.on('chat_init', (msg) => {
