@@ -61,28 +61,19 @@ io.on('connection', (socket) => {
             socket.emit('chat_init', help);
         }
         else {
+            const messageData = {
+                text: msg,
+                senderId: socket.id
+            };
             const rooms = Array.from(socket.rooms).filter(r => r !== socket.id);
             if (rooms.length > 0) {
                 const room = rooms[0];
-                io.to(room).emit('chat_message', `[${room}] ${msg}`);
+                io.to(room).emit('chat_message', { ...messageData, text: `[${room}] ${msg}` });
             } else {
-                const messageData = {
-                    text: msg,
-                    senderId: socket.id
-                };
-                const rooms = Array.from(socket.rooms).filter(r => r !== socket.id);
-                if (rooms.length > 0) {
-                    const room = rooms[0];
-                    io.to(room).emit('chat_message', { ...messageData, text: `[${room}] ${msg}` });
-                } else {
-                    io.emit('chat_message', messageData);
-                }
+                io.emit('chat_message', messageData);
             }
         }
-
     });
-
-
     socket.on('disconnect', () => {
         console.log('A user disconnected');
     });
