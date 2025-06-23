@@ -17,3 +17,7 @@ cd chat-with-socket
 npm install
 npm run dev
 ````
+
+### Referencia
+Utilizado no projeto a documentação da biblioteca socket.io
+https://socket.io/docs/v4/
