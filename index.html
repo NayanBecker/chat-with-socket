@@ -5,10 +5,18 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Socket.IO chat</title>
     <style>
+        :root {
+            --cor-enviada: #007bff;
+            --cor-recebida: #e9e9eb;
+            --cor-texto-enviada: white;
+            --cor-texto-recebida: #333;
+        }
+
         body {
             margin: 0;
             padding-bottom: 3rem;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f8;
         }
 
         #form {
@@ -44,20 +52,37 @@
             border-radius: 3px;
             outline: none;
             color: #fff;
+            cursor: pointer;
         }
 
         #messages {
             list-style-type: none;
             margin: 0;
-            padding: 0;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
         }
 
         #messages>li {
             padding: 0.5rem 1rem;
+            margin-bottom: 0.5rem;
+            max-width: 70%;
+            word-wrap: break-word;
+            border-radius: 1.25rem;
         }
 
-        #messages>li:nth-child(odd) {
-            background: #efefef;
+        .sent {
+            align-self: flex-end;
+            background-color: var(--cor-enviada);
+            color: var(--cor-texto-enviada);
+            border-bottom-right-radius: 0.2rem;
+        }
+
+        .received {
+            align-self: flex-start;
+            background-color: var(--cor-recebida);
+            color: var(--cor-texto-recebida);
+            border-bottom-left-radius: 0.2rem;
         }
     </style>
 </head>
@@ -72,34 +97,44 @@
 <script>
     const socket = io();
 
-
     const form = document.getElementById('form');
     const input = document.getElementById('input');
     const messages = document.getElementById('messages');
 
-    socket.broadcast = true;
-
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (input.value) {
-            socket.emit('chat_init', input.value);
-            input.value = '';
             socket.emit('chat_message', input.value);
+            socket.emit('chat_init', input.value);
+
             input.value = '';
-            socket.broadcast = true;
         }
     });
+
+    function addMessage(data, isSystemMessage = false) {
+        const item = document.createElement('li');
+
+        item.innerHTML = (typeof data === 'object' && data.text) ? data.text : data;
+
+        if (isSystemMessage) {
+            item.classList.add('received');
+        } else if (data.senderId === socket.id) {
+            item.classList.add('sent');
+        } else {
+            item.classList.add('received');
+        }
+
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
     socket.on('chat_init', (msg) => {
-        const item = document.createElement('li');
-        item.innerHTML = msg;
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
+        addMessage(msg, true); // O 'true' indica que é uma mensagem do sistema/comando
     });
-    socket.on('chat_message', (msg) => {
-        const item = document.createElement('li');
-        item.textContent = msg;
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
+
+    // Listener principal para mensagens de chat
+    socket.on('chat_message', (data) => {
+        addMessage(data);
     });
 </script>
 

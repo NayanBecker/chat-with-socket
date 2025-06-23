@@ -1,5 +1,5 @@
 import express from 'express';
-import { createServer, get } from 'http';
+import { createServer } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { Server } from 'socket.io';
@@ -7,7 +7,9 @@ import { Server } from 'socket.io';
 
 const app = express();
 const server = createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    connectionStateRecovery: {}
+});
 
 const data = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 const help = 'Comandos disponíveis: <br/>/data - Mostra a data atual <br/>/help - Mostra esta mensagem de ajuda <br/>/RH - Informações sobre Recursos Humanos<br/>/TI - Informações sobre Tecnologia da Informação<br/>/ENG - Informações sobre Engenharia<br/>/Sair - Encerra a sessão';
@@ -33,7 +35,6 @@ io.on('connection', (socket) => {
 
         } else if (msg.toLowerCase() === '/rh') {
             socket.join('rh');
-            io.to('rh').emit('chat_rh', 'Recursos Humanos: Ola, como posso ajudar?');
             socket.on('chat_rh', (msg) => {
                 socket.emit('chat_rh', 'Recursos Humanos: Ola, como posso ajudar?');
             });
@@ -54,7 +55,7 @@ io.on('connection', (socket) => {
         else if (msg.toLowerCase() === '/sair') {
             socket.leave('rh');
             socket.leave('eng');
-            socket.emit('chat_init', 'Sessão encerrada. Até logo!');
+            socket.leave('ti');
         }
         else if (msg.toLowerCase() === '/help') {
             socket.emit('chat_init', help);
@@ -65,12 +66,19 @@ io.on('connection', (socket) => {
                 const room = rooms[0];
                 io.to(room).emit('chat_message', `[${room}] ${msg}`);
             } else {
-                socket.emit('chat_message', '[TODOS]' + msg);
-                socket.broadcast.emit('chat_message', '[TODOS] ' + msg);
-
+                const messageData = {
+                    text: msg,
+                    senderId: socket.id
+                };
+                const rooms = Array.from(socket.rooms).filter(r => r !== socket.id);
+                if (rooms.length > 0) {
+                    const room = rooms[0];
+                    io.to(room).emit('chat_message', { ...messageData, text: `[${room}] ${msg}` });
+                } else {
+                    io.emit('chat_message', messageData);
+                }
             }
         }
-
 
     });
 
